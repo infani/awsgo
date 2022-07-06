@@ -14,4 +14,4 @@
 
 ### How to init go module
 
-* go mod init github.com:infani/awsgo
+* go mod init github.com/infani/awsgo

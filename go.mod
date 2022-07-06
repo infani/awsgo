@@ -1,4 +1,4 @@
-module github.com:infani/awsgo
+module github.com/infani/awsgo
 
 go 1.18
 
