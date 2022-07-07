@@ -2,7 +2,10 @@ module github.com/infani/awsgo
 
 go 1.18
 
-require github.com/aws/aws-sdk-go-v2 v1.16.7
+require (
+	github.com/aws/aws-sdk-go-v2 v1.16.7
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.27.1
+)
 
 require (
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.3 // indirect
@@ -16,7 +19,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.27.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.16.9 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -25,7 +27,7 @@ require (
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.15.13
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.19
-	github.com/aws/aws-sdk-go-v2/service/servicediscovery v1.17.7
+	github.com/aws/aws-sdk-go-v2/service/servicediscovery v1.17.8
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.27.4
 	github.com/aws/smithy-go v1.12.0 // indirect
 )
