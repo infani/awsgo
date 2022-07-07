@@ -26,5 +26,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.15.13
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.19
 	github.com/aws/aws-sdk-go-v2/service/servicediscovery v1.17.7
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.27.4
 	github.com/aws/smithy-go v1.12.0 // indirect
 )
