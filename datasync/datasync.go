@@ -2,7 +2,6 @@ package datasync
 
 import (
 	"context"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsDatasync "github.com/aws/aws-sdk-go-v2/service/datasync"
@@ -15,16 +14,10 @@ type SyncS3DataInput struct {
 	SourceDirectory      string
 	DestinationDirectory string
 	Files                []string
+	AccessRoleArn        string
 }
 
-type RemoveS3SyncDataTaskInput struct {
-	S3Bucket             string
-	SourceDirectory      string
-	DestinationDirectory string
-	TaskArn              string
-}
-
-func genS3Location(s3Bucket string, directory string) ([]types.LocationListEntry, error) {
+func genS3Location(s3Bucket string, directory string, accessRoleArn string) ([]types.LocationListEntry, error) {
 	cfg, err := awsConfig.LoadAWSDefaultConfig()
 	if err != nil {
 		panic("configuration error, " + err.Error())
@@ -35,7 +28,7 @@ func genS3Location(s3Bucket string, directory string) ([]types.LocationListEntry
 	createLocationS3Input := &awsDatasync.CreateLocationS3Input{
 		S3BucketArn: aws.String("arn:aws:s3:::" + s3Bucket),
 		S3Config: &types.S3Config{
-			BucketAccessRoleArn: aws.String("arn:aws:iam::719970786186:role/service-role/AWSDataSyncS3BucketAccess-vivoreco"),
+			BucketAccessRoleArn: aws.String(accessRoleArn),
 		},
 		Subdirectory: aws.String(directory),
 	}
@@ -82,7 +75,7 @@ func SyncS3Data(input *SyncS3DataInput) (string, error) {
 		return "", err
 	}
 	if len(sourceLocations) == 0 {
-		sourceLocations, err = genS3Location(input.S3Bucket, input.SourceDirectory)
+		sourceLocations, err = genS3Location(input.S3Bucket, input.SourceDirectory, input.AccessRoleArn)
 		if err != nil {
 			return "", err
 		}
@@ -92,7 +85,7 @@ func SyncS3Data(input *SyncS3DataInput) (string, error) {
 		return "", err
 	}
 	if len(destinationLocations) == 0 {
-		destinationLocations, err = genS3Location(input.S3Bucket, input.DestinationDirectory)
+		destinationLocations, err = genS3Location(input.S3Bucket, input.DestinationDirectory, input.AccessRoleArn)
 		if err != nil {
 			return "", err
 		}
@@ -145,7 +138,7 @@ func deleteLocation(locationArn *string) error {
 	return err
 }
 
-func RemoveS3SyncDataTask(input *RemoveS3SyncDataTaskInput) error {
+func RemoveS3SyncDataTask(taskArn string) error {
 	cfg, err := awsConfig.LoadAWSDefaultConfig()
 	if err != nil {
 		panic("configuration error, " + err.Error())
@@ -154,33 +147,11 @@ func RemoveS3SyncDataTask(input *RemoveS3SyncDataTaskInput) error {
 	ctx := context.Background()
 
 	deleteTaskInput := &awsDatasync.DeleteTaskInput{
-		TaskArn: &input.TaskArn,
+		TaskArn: aws.String(taskArn),
 	}
 	_, err = client.DeleteTask(ctx, deleteTaskInput)
 	if err != nil {
 		return err
-	}
-
-	sourceLocations, err := getS3Locations(input.S3Bucket, input.SourceDirectory)
-	if err != nil {
-		return err
-	}
-	for _, item := range sourceLocations {
-		err := deleteLocation(item.LocationArn)
-		if err != nil && !strings.Contains(err.Error(), "in use") {
-			return err
-		}
-	}
-
-	destinationLocations, err := getS3Locations(input.S3Bucket, input.DestinationDirectory)
-	if err != nil {
-		return err
-	}
-	for _, item := range destinationLocations {
-		err := deleteLocation(item.LocationArn)
-		if err != nil && !strings.Contains(err.Error(), "in use") {
-			return err
-		}
 	}
 	return err
 }
