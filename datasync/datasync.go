@@ -99,13 +99,19 @@ func SyncS3Data(input *SyncS3DataInput) (string, error) {
 	ctx := context.Background()
 
 	includes := []types.FilterRule{}
+	filterString := ""
 	for _, item := range input.Files {
-		filterRule := types.FilterRule{
-			FilterType: types.FilterTypeSimplePattern,
-			Value:      aws.String(item),
+		if filterString != "" {
+			filterString = filterString + "|"
 		}
-		includes = append(includes, filterRule)
+		filterString = filterString + item
 	}
+
+	filterRule := types.FilterRule{
+		FilterType: types.FilterTypeSimplePattern,
+		Value:      aws.String(filterString),
+	}
+	includes = append(includes, filterRule)
 	createTaskInput := &awsDatasync.CreateTaskInput{
 		DestinationLocationArn: destinationLocations[0].LocationArn,
 		SourceLocationArn:      sourceLocations[0].LocationArn,
