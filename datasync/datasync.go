@@ -112,9 +112,14 @@ func SyncS3Data(input *SyncS3DataInput) (string, error) {
 		Value:      aws.String(filterString),
 	}
 	includes = append(includes, filterRule)
+	options := &types.Options{
+		TransferMode: types.TransferModeAll,
+		VerifyMode:   types.VerifyModeOnlyFilesTransferred,
+	}
 	createTaskInput := &awsDatasync.CreateTaskInput{
 		DestinationLocationArn: destinationLocations[0].LocationArn,
 		SourceLocationArn:      sourceLocations[0].LocationArn,
+		Options:                options,
 		Includes:               includes,
 	}
 	createTaskOutput, err := client.CreateTask(ctx, createTaskInput)
