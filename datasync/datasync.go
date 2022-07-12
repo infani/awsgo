@@ -17,6 +17,12 @@ type SyncS3DataInput struct {
 	AccessRoleArn        string
 }
 
+type RemoveS3SyncDataTaskInput struct {
+	S3Bucket             string
+	DestinationDirectory string
+	TaskArn              string
+}
+
 func genS3Location(s3Bucket string, directory string, accessRoleArn string) ([]types.LocationListEntry, error) {
 	cfg, err := awsConfig.LoadAWSDefaultConfig()
 	if err != nil {
@@ -149,7 +155,7 @@ func deleteLocation(locationArn *string) error {
 	return err
 }
 
-func RemoveS3SyncDataTask(taskArn string) error {
+func RemoveS3SyncDataTask(input RemoveS3SyncDataTaskInput) error {
 	cfg, err := awsConfig.LoadAWSDefaultConfig()
 	if err != nil {
 		panic("configuration error, " + err.Error())
@@ -158,11 +164,23 @@ func RemoveS3SyncDataTask(taskArn string) error {
 	ctx := context.Background()
 
 	deleteTaskInput := &awsDatasync.DeleteTaskInput{
-		TaskArn: aws.String(taskArn),
+		TaskArn: aws.String(input.TaskArn),
 	}
 	_, err = client.DeleteTask(ctx, deleteTaskInput)
 	if err != nil {
 		return err
 	}
+
+	locations, err := getS3Locations(input.S3Bucket, input.DestinationDirectory)
+	if err != nil {
+		return err
+	}
+	for _, location := range locations {
+		err = deleteLocation(location.LocationArn)
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
