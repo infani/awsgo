@@ -155,7 +155,7 @@ func deleteLocation(locationArn *string) error {
 	return err
 }
 
-func RemoveS3SyncDataTask(input RemoveS3SyncDataTaskInput) error {
+func RemoveS3SyncDataTask(input *RemoveS3SyncDataTaskInput) error {
 	cfg, err := awsConfig.LoadAWSDefaultConfig()
 	if err != nil {
 		panic("configuration error, " + err.Error())
