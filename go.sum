@@ -54,6 +54,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.8 h1:oKnAXxSF2F
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.8/go.mod h1:rDVhIMAX9N2r8nWxDUlbubvvaFMnfsm+3jAV7q+rpM4=
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.8 h1:TlN1UC39A0LUNoD51ubO5h32haznA+oVe15jO9O4Lj0=
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.8/go.mod h1:JlVwmWtT/1c5W+6oUsjXjAJ0iJZ+hlghdrDy/8JxGCU=
+github.com/aws/aws-sdk-go-v2/service/iotdataplane v1.12.6 h1:l4cevW4DG12cz1du3ACoOahlXotjZSKO1JVMn8vCnAo=
+github.com/aws/aws-sdk-go-v2/service/iotdataplane v1.12.6/go.mod h1:TlbzhvnaimAOBYcQzYBgzk3QfVxgQu53umsE/0EmIdQ=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.27.1 h1:OKQIQ0QhEBmGr2LfT952meIZz3ujrPYnxH+dO/5ldnI=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.27.1/go.mod h1:NffjpNsMUFXp6Ok/PahrktAncoekWrywvmIK83Q2raE=
 github.com/aws/aws-sdk-go-v2/service/servicediscovery v1.17.7 h1:oBA2kHlC24mLutk2cpJv7sb2qrDLrWAiBNLQ2kQGp5g=
