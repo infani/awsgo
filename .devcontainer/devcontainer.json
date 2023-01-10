@@ -37,8 +37,7 @@
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
 				"golang.Go",
-				"amazonwebservices.aws-toolkit-vscode",
-				"GitHub.copilot"
+				"amazonwebservices.aws-toolkit-vscode"
 			]
 		}
 	},
