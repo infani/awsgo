@@ -3,7 +3,7 @@
 ### What is this repository for? ###
 
 * awsgo for aws sdk golang
-* Version: 6.1.11
+* Version: 1.0.4
 
 ### How do I get set up? ###
 
