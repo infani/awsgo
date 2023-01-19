@@ -31,6 +31,7 @@ type subscriber struct {
 type ClientOptions struct {
 	Server     string // tcp://host:port
 	TLSConfig *ClientOptions_TLSConfig
+	ClientID string
 }
 
 type ClientOptions_TLSConfig struct {
@@ -70,7 +71,7 @@ func NewClient(opts ClientOptions) (Client, error) {
 	pahoMqttCli := pahoMqtt.NewClient(pahoMqtt.NewClientOptions().AddBroker(opts.Server).SetTLSConfig(&tls.Config{
 		Certificates: []tls.Certificate{cert},
 		RootCAs:      certPool,
-	}).SetConnectionLostHandler(func(client pahoMqtt.Client, err error) {
+	}).SetClientID(opts.ClientID).SetCleanSession(false).SetConnectionLostHandler(func(client pahoMqtt.Client, err error) {
 		cli.connectionLostHandler()
 		fmt.Println("disconnected")
 	}))
@@ -91,7 +92,7 @@ func (cli *client) IsConnected() bool {
 }
 
 func (cli *client) Publish(topic string, payload interface{}) error {
-	token := cli.pahoMqttCli.Publish(topic, 0, false, payload)
+	token := cli.pahoMqttCli.Publish(topic, 1, false, payload)
 	if token.Wait() && token.Error() != nil {
 		return fmt.Errorf("publish error : %w", token.Error())
 	}
@@ -104,7 +105,7 @@ func (cli *client) Subscribe(topic string) (rxgo.Observable, error) {
 		return nil, fmt.Errorf("topic %s is already subscribed", topic)
 	}
 	ch := make(chan rxgo.Item)
-	token := cli.pahoMqttCli.Subscribe(topic, 0, func(client pahoMqtt.Client, msg pahoMqtt.Message) {
+	token := cli.pahoMqttCli.Subscribe(topic, 1, func(client pahoMqtt.Client, msg pahoMqtt.Message) {
 		// fmt.Println(msg.Topic(), string(msg.Payload()))
 		ch <- rxgo.Of(msg.Payload())
 	})
