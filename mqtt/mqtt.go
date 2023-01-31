@@ -68,13 +68,18 @@ func NewClient(opts ClientOptions) (Client, error) {
 	}
 
 	cli := &client{}
-	pahoMqttCli := pahoMqtt.NewClient(pahoMqtt.NewClientOptions().AddBroker(opts.Server).SetTLSConfig(&tls.Config{
+	clientOptions := pahoMqtt.NewClientOptions().AddBroker(opts.Server).SetTLSConfig(&tls.Config{
 		Certificates: []tls.Certificate{cert},
 		RootCAs:      certPool,
-	}).SetClientID(opts.ClientID).SetCleanSession(false).SetConnectionLostHandler(func(client pahoMqtt.Client, err error) {
+	}).SetConnectionLostHandler(func(client pahoMqtt.Client, err error) {
 		cli.connectionLostHandler()
 		fmt.Println("disconnected")
-	}))
+	})
+	if opts.ClientID != "" {
+		clientOptions = clientOptions.SetCleanSession(false).SetClientID(opts.ClientID)		
+	}
+	pahoMqttCli := pahoMqtt.NewClient(clientOptions)
+	
 	cli.pahoMqttCli = pahoMqttCli
 	token := pahoMqttCli.Connect()
 	ok := token.WaitTimeout(time.Second * 5)

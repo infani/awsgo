@@ -55,6 +55,18 @@ func TestNewClient(t *testing.T) {
 			wantIsConnected: true,
 			wantErr:         false,
 		},
+		{
+			name: "withClientID",
+			args: args{
+				opts: ClientOptions{
+					Server:     server,
+					TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
+					ClientID: "clientID",
+				},
+			},
+			wantIsConnected: true,
+			wantErr:         false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
