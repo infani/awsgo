@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-//https://ap-northeast-1.console.aws.amazon.com/iot/home?region=ap-northeast-1#/thing/mqtt_test
+// https://ap-northeast-1.console.aws.amazon.com/iot/home?region=ap-northeast-1#/thing/mqtt_test
 const (
 	server     = "tcps://a2vbbdorkkxq7n-ats.iot.ap-northeast-1.amazonaws.com:8883"
 	certFile   = "./certs/mqtt_test.cert.pem"
@@ -28,7 +28,7 @@ func TestNewClient(t *testing.T) {
 			name: "wrong host",
 			args: args{
 				opts: ClientOptions{
-					Server:     "tcps://nohost:8883",
+					Server:    "tcps://nohost:8883",
 					TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
 				},
 			},
@@ -38,7 +38,7 @@ func TestNewClient(t *testing.T) {
 			name: "wrong port",
 			args: args{
 				opts: ClientOptions{
-					Server:     server[:len(server)-1],
+					Server:    server[:len(server)-1],
 					TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
 				},
 			},
@@ -48,7 +48,7 @@ func TestNewClient(t *testing.T) {
 			name: "ok",
 			args: args{
 				opts: ClientOptions{
-					Server:     server,
+					Server:    server,
 					TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
 				},
 			},
@@ -59,9 +59,9 @@ func TestNewClient(t *testing.T) {
 			name: "withClientID",
 			args: args{
 				opts: ClientOptions{
-					Server:     server,
+					Server:    server,
 					TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
-					ClientID: "clientID",
+					ClientID:  "clientID",
 				},
 			},
 			wantIsConnected: true,
@@ -102,7 +102,7 @@ func Test_client_Publish(t *testing.T) {
 		},
 	}
 	cli, err := NewClient(ClientOptions{
-		Server:     server,
+		Server:    server,
 		TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
 	})
 	if err != nil {
@@ -138,7 +138,7 @@ func Test_client_Subscribe(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cli, err := NewClient(ClientOptions{
-				Server:     server,
+				Server:    server,
 				TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
 			})
 			if err != nil {
@@ -152,7 +152,7 @@ func Test_client_Subscribe(t *testing.T) {
 			}
 			cli.Publish(tt.args.topic, "Test_client_Subscribe")
 			stream := obs.First().Observe()
-			msg := <- stream
+			msg := <-stream
 			if msg.Error() {
 				t.Errorf("client.Subscribe() error = %v", msg.E)
 			} else {
@@ -167,7 +167,7 @@ func Test_client_Subscribe(t *testing.T) {
 func Test_Connection_Lost(t *testing.T) {
 	topic := "Device/Test_Connection_Lost/sub/peopletrack/webrtc/"
 	cli, err := NewClient(ClientOptions{
-		Server:     server,
+		Server:    server,
 		TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
 	})
 	if err != nil {
@@ -191,5 +191,49 @@ func Test_Connection_Lost(t *testing.T) {
 		} else {
 			t.Log(string(msg.V.([]byte)))
 		}
+	}
+}
+
+func Test_client_Unsubscribe(t *testing.T) {
+	topic := "Device/Test_client_Unsubscribe/sub/peopletrack/webrtc/"
+	cli, err := NewClient(ClientOptions{
+		Server:    server,
+		TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
+	})
+	if err != nil {
+		t.Errorf("NewClient() error = %v", err)
+		return
+	}
+	cli.Subscribe(topic)
+	type args struct {
+		topic string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			args: args{
+				topic: topic,
+			},
+			wantErr: false,
+		},
+		{
+			name: "unsubcribe again",
+			args: args{
+				topic: topic,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if err := cli.Unsubscribe(tt.args.topic); (err != nil) != tt.wantErr {
+				t.Errorf("client.Unsubscribe() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }

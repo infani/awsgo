@@ -15,6 +15,7 @@ import (
 type Client interface {
 	Publish(topic string, payload interface{}) error
 	Subscribe(topic string) (rxgo.Observable, error)
+	Unsubscribe(topic string) (error)
 	IsConnected() bool
 	Close()
 }
@@ -22,10 +23,6 @@ type Client interface {
 type client struct {
 	pahoMqttCli   pahoMqtt.Client
 	subscriberMap sync.Map
-}
-
-type subscriber struct {
-	ch chan rxgo.Item
 }
 
 type ClientOptions struct {
@@ -117,18 +114,32 @@ func (cli *client) Subscribe(topic string) (rxgo.Observable, error) {
 	if token.Wait() && token.Error() != nil {
 		return nil, fmt.Errorf("subscribe error : %w", token.Error())
 	}
-	cli.subscriberMap.Store(topic, &subscriber{ch})
+	cli.subscriberMap.Store(topic, &ch)
 	return rxgo.FromChannel(ch), nil
+}
+
+func (cli *client) Unsubscribe(topic string) (error) {
+	value, ok := cli.subscriberMap.LoadAndDelete(topic)
+	if !ok {
+		return fmt.Errorf("topic %s is not found", topic)
+	}
+	token := cli.pahoMqttCli.Unsubscribe(topic)
+	if token.Wait() && token.Error() != nil {
+		return fmt.Errorf("unsubscribe error : %w", token.Error())
+	}
+	ch, _ := value.(*chan rxgo.Item)
+	close(*ch)
+	return nil
 }
 
 func (cli *client) connectionLostHandler() {
 	cli.subscriberMap.Range(func(key, value interface{}) bool {
-		subscriber, ok := value.(*subscriber)
+		ch, ok := value.(*chan rxgo.Item)
 		if !ok {
 			return true
 		}
-		subscriber.ch <- rxgo.Error(fmt.Errorf("connection lost"))
-		close(subscriber.ch)
+		*ch <- rxgo.Error(fmt.Errorf("connection lost"))
+		close(*ch)
 		return true
 	})
 	cli.subscriberMap = sync.Map{}
@@ -137,11 +148,11 @@ func (cli *client) connectionLostHandler() {
 func (cli *client) Close() {
 	cli.pahoMqttCli.Disconnect(250)
 	cli.subscriberMap.Range(func(key, value interface{}) bool {
-		subscriber, ok := value.(*subscriber)
+		ch, ok := value.(*chan rxgo.Item)
 		if !ok {
 			return true
 		}
-		close(subscriber.ch)
+		close(*ch)
 		return true
 	})
 	cli.subscriberMap = sync.Map{}
