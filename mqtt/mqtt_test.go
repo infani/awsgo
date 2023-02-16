@@ -147,6 +147,12 @@ func Test_client_Subscribe(t *testing.T) {
 				topic: "Device/Test_client_Subscribe/sub/peopletrack/webrtc/",
 			},
 			wantErr: false,
+		}, {
+			name: "noAuth",
+			args: args{
+				topic: "noAuth",
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -162,6 +168,9 @@ func Test_client_Subscribe(t *testing.T) {
 			obs, err := cli.Subscribe(tt.args.topic)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("client.Subscribe() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr {
 				return
 			}
 			cli.Publish(tt.args.topic, "Test_client_Subscribe")
