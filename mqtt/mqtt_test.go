@@ -99,6 +99,13 @@ func Test_client_Publish(t *testing.T) {
 				payload: "Test_client_Publish",
 			},
 			wantErr: false,
+		}, {
+			name: "noAuth",
+			args: args{
+				topic:   "noAuth",
+				payload: "Test_client_Publish",
+			},
+			wantErr: false,
 		},
 	}
 	cli, err := NewClient(ClientOptions{
@@ -115,6 +122,13 @@ func Test_client_Publish(t *testing.T) {
 				t.Errorf("client.Publish() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+	if !cli.IsConnected() {
+		t.Log("cli.IsConnected()", cli.IsConnected())
+	}
+	time.Sleep(1 * time.Second)
+	if cli.IsConnected() {
+		t.Log("cli.IsConnected()", cli.IsConnected())
 	}
 }
 

@@ -15,7 +15,7 @@ import (
 type Client interface {
 	Publish(topic string, payload interface{}) error
 	Subscribe(topic string) (rxgo.Observable, error)
-	Unsubscribe(topic string) (error)
+	Unsubscribe(topic string) error
 	IsConnected() bool
 	Close()
 }
@@ -26,9 +26,9 @@ type client struct {
 }
 
 type ClientOptions struct {
-	Server     string // tcp://host:port
+	Server    string // tcp://host:port
 	TLSConfig *ClientOptions_TLSConfig
-	ClientID string
+	ClientID  string
 }
 
 type ClientOptions_TLSConfig struct {
@@ -70,13 +70,13 @@ func NewClient(opts ClientOptions) (Client, error) {
 		RootCAs:      certPool,
 	}).SetConnectionLostHandler(func(client pahoMqtt.Client, err error) {
 		cli.connectionLostHandler()
-		fmt.Println("disconnected")
+		// log.Println(err)
 	})
 	if opts.ClientID != "" {
-		clientOptions = clientOptions.SetCleanSession(false).SetClientID(opts.ClientID)		
+		clientOptions = clientOptions.SetCleanSession(false).SetClientID(opts.ClientID)
 	}
 	pahoMqttCli := pahoMqtt.NewClient(clientOptions)
-	
+
 	cli.pahoMqttCli = pahoMqttCli
 	token := pahoMqttCli.Connect()
 	ok := token.WaitTimeout(time.Second * 5)
@@ -90,7 +90,7 @@ func NewClient(opts ClientOptions) (Client, error) {
 }
 
 func (cli *client) IsConnected() bool {
-	return cli.pahoMqttCli.IsConnected()
+	return cli.pahoMqttCli.IsConnectionOpen()
 }
 
 func (cli *client) Publish(topic string, payload interface{}) error {
@@ -118,7 +118,7 @@ func (cli *client) Subscribe(topic string) (rxgo.Observable, error) {
 	return rxgo.FromChannel(ch), nil
 }
 
-func (cli *client) Unsubscribe(topic string) (error) {
+func (cli *client) Unsubscribe(topic string) error {
 	value, ok := cli.subscriberMap.LoadAndDelete(topic)
 	if !ok {
 		return fmt.Errorf("topic %s is not found", topic)
