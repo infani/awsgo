@@ -186,6 +186,51 @@ func Test_client_Subscribe(t *testing.T) {
 	}
 }
 
+func Test_client_SubscribeReturnMessage(t *testing.T) {
+	type args struct {
+		topic string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "test",
+			args: args{
+				topic: "Device/Test_client_Subscribe/sub/peopletrack/webrtc/",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cli, err := NewClient(ClientOptions{
+				Server:    server,
+				TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
+			})
+			if err != nil {
+				t.Errorf("NewClient() error = %v", err)
+				return
+			}
+			obs, err := cli.SubscribeReturnMessage(tt.args.topic)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("client.Subscribe() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			cli.Publish(tt.args.topic, "Test_client_Subscribe")
+			stream := obs.First().Observe()
+			msg := <-stream
+			if msg.Error() {
+				t.Errorf("client.Subscribe() error = %v", msg.E)
+			} else {
+				t.Log(msg.V)
+			}
+			cli.Close()
+		})
+	}
+}
+
 // use "netstat -tunp|grep 8883" and "sudo tcpkill host ip"
 func Test_Connection_Lost(t *testing.T) {
 	topic := "Device/Test_Connection_Lost/sub/peopletrack/webrtc/"

@@ -15,6 +15,7 @@ import (
 type Client interface {
 	Publish(topic string, payload interface{}) error
 	Subscribe(topic string) (rxgo.Observable, error)
+	SubscribeReturnMessage(topic string) (rxgo.Observable, error)
 	Unsubscribe(topic string) error
 	IsConnected() bool
 	Close()
@@ -110,6 +111,28 @@ func (cli *client) Subscribe(topic string) (rxgo.Observable, error) {
 	token := cli.pahoMqttCli.Subscribe(topic, 1, func(client pahoMqtt.Client, msg pahoMqtt.Message) {
 		// fmt.Println(msg.Topic(), string(msg.Payload()))
 		ch <- rxgo.Of(msg.Payload())
+	})
+	if token.Wait() && token.Error() != nil {
+		return nil, fmt.Errorf("subscribe error : %w", token.Error())
+	}
+	cli.subscriberMap.Store(topic, &ch)
+	return rxgo.FromChannel(ch), nil
+}
+
+type Message struct {
+	Topic   string
+	Payload []byte
+}
+
+func (cli *client) SubscribeReturnMessage(topic string) (rxgo.Observable, error) {
+	_, ok := cli.subscriberMap.Load(topic)
+	if ok {
+		return nil, fmt.Errorf("topic %s is already subscribed", topic)
+	}
+	ch := make(chan rxgo.Item)
+	token := cli.pahoMqttCli.Subscribe(topic, 1, func(client pahoMqtt.Client, msg pahoMqtt.Message) {
+		// fmt.Println(msg.Topic(), string(msg.Payload()))
+		ch <- rxgo.Of(Message{Topic: msg.Topic(), Payload: msg.Payload()})
 	})
 	if token.Wait() && token.Error() != nil {
 		return nil, fmt.Errorf("subscribe error : %w", token.Error())
