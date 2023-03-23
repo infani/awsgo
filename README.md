@@ -4,6 +4,7 @@
 
 * awsgo for aws sdk golang
 * Version: 1.0.10
+* https://aws.github.io/aws-sdk-go-v2/docs/
 
 ### How do I get set up? ###
 
