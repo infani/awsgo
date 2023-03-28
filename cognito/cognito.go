@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rsa"
 	"fmt"
-	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -14,7 +13,24 @@ import (
 	"github.com/lestrrat-go/jwx/jwk"
 )
 
-func InitiateAuth(clientId string, username string, password string) (accessToken string, err error) {
+type client struct {
+	clientId string
+	set      jwk.Set
+}
+
+func New(region string, userPoolID string, clientId string) (*client, error) {
+	jwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", region, userPoolID)
+	set, err := jwk.Fetch(context.Background(), jwksURL)
+	if err != nil {
+		return nil, err
+	}
+	return &client{
+		clientId: clientId,
+		set:      set,
+	}, nil
+}
+
+func (cli *client) InitiateAuth(username string, password string) (accessToken string, err error) {
 
 	cfg, err := awsConfig.LoadAWSDefaultConfig()
 	if err != nil {
@@ -25,7 +41,7 @@ func InitiateAuth(clientId string, username string, password string) (accessToke
 
 	input := &cognitoidentityprovider.InitiateAuthInput{
 		AuthFlow: types.AuthFlowTypeUserPasswordAuth,
-		ClientId: aws.String(clientId),
+		ClientId: aws.String(cli.clientId),
 		AuthParameters: map[string]string{
 			"USERNAME": username,
 			"PASSWORD": password,
@@ -41,13 +57,7 @@ func InitiateAuth(clientId string, username string, password string) (accessToke
 	return *output.AuthenticationResult.AccessToken, nil
 }
 
-func decodeJWT(jwksURL string, tokenString string) {
-
-	set, err := jwk.Fetch(context.Background(), jwksURL)
-	if err != nil {
-		panic(err)
-	}
-
+func (cli *client) decodeJWT(tokenString string) (sub string, err error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -58,7 +68,7 @@ func decodeJWT(jwksURL string, tokenString string) {
 			return nil, fmt.Errorf("kid header not found")
 		}
 
-		key, ok := set.LookupKeyID(kid)
+		key, ok := cli.set.LookupKeyID(kid)
 		if !ok {
 			return nil, fmt.Errorf("key %v not found", kid)
 		}
@@ -71,13 +81,8 @@ func decodeJWT(jwksURL string, tokenString string) {
 		return &rsaPublicKey, nil
 	})
 
-	if err != nil {
-		log.Println(err)
-		return
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		sub = claims["sub"].(string)
 	}
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		fmt.Println(claims["sub"])
-	} else {
-		fmt.Println(err)
-	}
+	return
 }
