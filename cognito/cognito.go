@@ -13,24 +13,24 @@ import (
 	"github.com/lestrrat-go/jwx/jwk"
 )
 
-type client struct {
+type Client struct {
 	clientId string
 	set      jwk.Set
 }
 
-func New(region string, userPoolID string, clientId string) (*client, error) {
+func New(region string, userPoolID string, clientId string) (*Client, error) {
 	jwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", region, userPoolID)
 	set, err := jwk.Fetch(context.Background(), jwksURL)
 	if err != nil {
 		return nil, err
 	}
-	return &client{
+	return &Client{
 		clientId: clientId,
 		set:      set,
 	}, nil
 }
 
-func (cli *client) InitiateAuth(username string, password string) (accessToken string, err error) {
+func (cli *Client) InitiateAuth(username string, password string) (accessToken string, err error) {
 
 	cfg, err := awsConfig.LoadAWSDefaultConfig()
 	if err != nil {
@@ -57,7 +57,7 @@ func (cli *client) InitiateAuth(username string, password string) (accessToken s
 	return *output.AuthenticationResult.AccessToken, nil
 }
 
-func (cli *client) decodeJWT(tokenString string) (sub string, err error) {
+func (cli *Client) DecodeJWT(tokenString string) (sub string, err error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])

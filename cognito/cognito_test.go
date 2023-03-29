@@ -64,7 +64,7 @@ func Test_decodeJWT(t *testing.T) {
 	cli, _ := New(region, userPoolID, clientId)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sub, err := cli.decodeJWT(tt.args.tokenString)
+			sub, err := cli.DecodeJWT(tt.args.tokenString)
 			t.Log(sub)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("decodeJWT() error = %v, wantErr %v", err, tt.wantErr)
