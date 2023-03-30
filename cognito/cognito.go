@@ -62,27 +62,29 @@ func (cli *Client) DecodeJWT(tokenString string) (sub string, err error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-
 		kid, ok := token.Header["kid"].(string)
 		if !ok {
 			return nil, fmt.Errorf("kid header not found")
 		}
-
 		key, ok := cli.set.LookupKeyID(kid)
 		if !ok {
 			return nil, fmt.Errorf("key %v not found", kid)
 		}
-
 		var rsaPublicKey rsa.PublicKey
 		if err := key.Raw(&rsaPublicKey); err != nil {
 			return nil, fmt.Errorf("failed to create public key: %v", err)
 		}
-
 		return &rsaPublicKey, nil
 	})
 
+	if err != nil {
+		return
+	}
+
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		sub = claims["sub"].(string)
+	} else {
+		err = fmt.Errorf("claims not found")
 	}
 	return
 }
