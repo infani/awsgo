@@ -3,6 +3,7 @@ package ssm
 import (
 	"context"
 	"log"
+
 	"github.com/infani/awsgo/config/awsConfig"
 
 	awsssm "github.com/aws/aws-sdk-go-v2/service/ssm"
@@ -16,7 +17,8 @@ func GetParameter(name *string) (string, error) {
 	}
 
 	client := awsssm.NewFromConfig(cfg)
-	out, err := client.GetParameter(context.Background(), &awsssm.GetParameterInput{Name: name, WithDecryption: true})
+	b := true
+	out, err := client.GetParameter(context.Background(), &awsssm.GetParameterInput{Name: name, WithDecryption: &b})
 	if err != nil {
 		return "", err
 	}
