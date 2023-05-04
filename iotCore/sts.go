@@ -8,6 +8,7 @@ import (
 	"github.com/infani/awsgo/config/awsConfig"
 )
 
+// aws iot describe-endpoint --endpoint-type iot:CredentialProvider
 func getEndpointAddress() (string, error) {
 	cfg, err := awsConfig.LoadAWSDefaultConfig()
 	if err != nil {
