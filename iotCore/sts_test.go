@@ -29,9 +29,9 @@ func TestGetCredentials(t *testing.T) {
 			name: "success",
 			args: args{
 				certificateFiles: CertificateFiles{
-					CertPath:   "certs/certificate.pem.crt",
-					KeyPath:    "certs/private.pem.key",
-					CaCertPath: "certs/rootCA.crt",
+					CertPath:   "../certs/certificate.pem.crt",
+					KeyPath:    "../certs/private.pem.key",
+					CaCertPath: "../certs/rootCA.crt",
 				},
 				url:       "https://ckoauhwbx2s36.credentials.iot.ap-northeast-1.amazonaws.com/role-aliases/hulkAssumeRole/credentials",
 				thingName: "000020230213-1683181838271",

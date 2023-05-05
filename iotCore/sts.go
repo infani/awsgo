@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -73,7 +74,9 @@ func GetCredentials(certificateFiles CertificateFiles, url string, thingName str
 	if err != nil {
 		return nil, err
 	}
-
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("status code is %d", res.StatusCode)
+	}
 	defer res.Body.Close()
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)
