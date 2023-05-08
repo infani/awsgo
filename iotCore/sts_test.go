@@ -43,6 +43,7 @@ func TestGetCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := GetCredentials(tt.args.certificateFiles, tt.args.url, tt.args.thingName)
+			t.Log(got)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetCredentials() error = %v, wantErr %v", err, tt.wantErr)
 				return

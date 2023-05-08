@@ -3,6 +3,7 @@ package signer
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"testing"
 
@@ -29,8 +30,8 @@ func TestSign(t *testing.T) {
 			args: args{
 				req: req,
 				credentials: aws.Credentials{
-					AccessKeyID:     "XXX",
-					SecretAccessKey: "XXX",
+					AccessKeyID:     "ASIARCNICF4ETRDHRZVL",
+					SecretAccessKey: "eNrW9c52JIvbeSArWw/t0efL5pICKQ+ufJdWCZbQ",
 					SessionToken:    "XXX",
 				},
 			},
@@ -42,6 +43,16 @@ func TestSign(t *testing.T) {
 			if err := Sign(tt.args.req, tt.args.credentials); (err != nil) != tt.wantErr {
 				t.Errorf("Sign() error = %v, wantErr %v", err, tt.wantErr)
 			}
+			client := &http.Client{}
+			res ,err := client.Do(tt.args.req)
+
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			defer res.Body.Close()
+		
+			log.Println("response Status:", res.Status)
 		})
 	}
 }
