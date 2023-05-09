@@ -9,13 +9,24 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/infani/awsgo/iotCore"
 )
 
 func TestSign(t *testing.T) {
+
+	certificateFiles := iotCore.CertificateFiles{
+		CertPath:   "../certs/certificate.pem.crt",
+		KeyPath:    "../certs/private.pem.key",
+		CaCertPath: "../certs/rootCA.crt",
+	}
+	certsUrl := "https://ckoauhwbx2s36.credentials.iot.ap-northeast-1.amazonaws.com/role-aliases/hulkAssumeRole/credentials"
 	thingName := "000020230213-1683181838271"
+	certs, _ := iotCore.GetCredentials(certificateFiles, certsUrl, thingName)
+	t.Log(certs)
+
 	url := fmt.Sprintf("https://iotconfig.dev.vortexcloud.com/things/%s/vsaas/system/general", thingName)
 	t.Log(url)
-	data := map[string]string{"name": "name"}
+	data := map[string]string{"name": "ben1"}
 	jsonValue, _ := json.Marshal(data)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonValue))
 	req.Header.Set("Content-Type", "application/json")
@@ -33,9 +44,9 @@ func TestSign(t *testing.T) {
 			args: args{
 				req: req,
 				credentials: aws.Credentials{
-					AccessKeyID:     "ASIARCNICF4ETRDHRZVL",
-					SecretAccessKey: "eNrW9c52JIvbeSArWw/t0efL5pICKQ+ufJdWCZbQ",
-					SessionToken:    "SessionToken",
+					AccessKeyID:     certs.AccessKeyId,
+					SecretAccessKey: certs.SecretAccessKey,
+					SessionToken:    certs.SessionToken,
 				},
 			},
 			wantErr: false,
