@@ -11,8 +11,8 @@ import (
 )
 
 func TestSign(t *testing.T) {
-	url := "https://foo.amazonaws.com/bar"
-	data := map[string]string{"firstname": "John", "lastname": "Doe"}
+	url := "https://iotconfig.dev.vortexcloud.com/things/thingName/vsaas/system/general"
+	data := map[string]string{"name": "name"}
 	jsonValue, _ := json.Marshal(data)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonValue))
 	req.Header.Set("Content-Type", "application/json")

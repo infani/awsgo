@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
+//https://docs.aws.amazon.com/zh_cn/AmazonS3/latest/API/sig-v4-header-based-auth.html
 func Sign(req *http.Request, credentials aws.Credentials) error {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
