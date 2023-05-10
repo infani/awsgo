@@ -15,6 +15,7 @@ import (
 )
 
 //https://docs.aws.amazon.com/zh_cn/AmazonS3/latest/API/sig-v4-header-based-auth.html
+//https://docs.aws.amazon.com/zh_cn/apigateway/latest/developerguide/api-gateway-iam-policy-examples-for-api-execution.html
 func Sign(req *http.Request, credentials aws.Credentials) error {
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
