@@ -29,12 +29,9 @@ func Sign(req *http.Request, credentials aws.Credentials) error {
 	io.Copy(h, body)
 	payloadHash := hex.EncodeToString(h.Sum(nil))
 	err = signer.SignHTTP(context.Background(), credentials, req, payloadHash, "execute-api", cfg.Region, time.Now())
-	log.Println(req.Header)
+	// log.Println(req.Header)
 	if err != nil {
 		log.Println(err)
 	}
-	// url, header, _ := signer.PresignHTTP(context.Background(), credentials, req, payloadHash, "execute-api", cfg.Region, time.Now())
-	// log.Println(url)
-	// log.Println(header)
 	return nil
 }

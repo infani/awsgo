@@ -1,11 +1,11 @@
 package signer
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -22,13 +22,9 @@ func TestSign(t *testing.T) {
 	certsUrl := "https://ckoauhwbx2s36.credentials.iot.ap-northeast-1.amazonaws.com/role-aliases/hulkAssumeRole/credentials"
 	thingName := "000020230213-1683181838271"
 	certs, _ := iotCore.GetCredentials(certificateFiles, certsUrl, thingName)
-	t.Log(certs)
-
-	url := fmt.Sprintf("https://iotconfig.dev.vortexcloud.com/things/%s/vsaas/system/general", thingName)
-	t.Log(url)
-	data := map[string]string{"name": "ben1"}
-	jsonValue, _ := json.Marshal(data)
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonValue))
+	url := fmt.Sprintf("https://iotconfigdevice.dev.vortexcloud.com/things/%s/vsaas/system/general", thingName)
+	payload := fmt.Sprintf("{\"info\":{ \"name\":\"%s\", \"city\":\"%s\" } }", "ben", "AsiaTaipei")
+	req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
 	req.Header.Set("Content-Type", "application/json")
 	type args struct {
 		req         *http.Request
@@ -65,7 +61,8 @@ func TestSign(t *testing.T) {
 				return
 			}
 			defer res.Body.Close()
-
+			body, _ := ioutil.ReadAll(res.Body)
+			log.Println(string(body))
 			log.Println("response Status:", res.Status)
 		})
 	}
