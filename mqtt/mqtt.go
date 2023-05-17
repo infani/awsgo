@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -14,9 +15,8 @@ import (
 
 type Client interface {
 	Publish(topic string, payload interface{}) error
-	Subscribe(topic string) (rxgo.Observable, error)
-	SubscribeReturnMessage(topic string) (rxgo.Observable, error)
-	Unsubscribe(topic string) error
+	Subscribe(ctx context.Context, topic string) (rxgo.Observable, error)
+	SubscribeReturnMessage(ctx context.Context, topic string) (rxgo.Observable, error)
 	IsConnected() bool
 	Close()
 }
@@ -24,6 +24,7 @@ type Client interface {
 type client struct {
 	pahoMqttCli   pahoMqtt.Client
 	subscriberMap sync.Map
+	mu sync.Mutex
 }
 
 type ClientOptions struct {
@@ -102,7 +103,8 @@ func (cli *client) Publish(topic string, payload interface{}) error {
 	return nil
 }
 
-func (cli *client) Subscribe(topic string) (rxgo.Observable, error) {
+func (cli *client) Subscribe(ctx context.Context, topic string) (rxgo.Observable, error) {
+	isClosed := false
 	_, ok := cli.subscriberMap.Load(topic)
 	if ok {
 		return nil, fmt.Errorf("topic %s is already subscribed", topic)
@@ -110,12 +112,25 @@ func (cli *client) Subscribe(topic string) (rxgo.Observable, error) {
 	ch := make(chan rxgo.Item)
 	token := cli.pahoMqttCli.Subscribe(topic, 1, func(client pahoMqtt.Client, msg pahoMqtt.Message) {
 		// fmt.Println(msg.Topic(), string(msg.Payload()))
-		ch <- rxgo.Of(msg.Payload())
+		cli.mu.Lock()
+		if !isClosed {
+			ch <- rxgo.Of(msg.Payload())
+		}
+		cli.mu.Unlock()
 	})
 	if token.Wait() && token.Error() != nil {
 		return nil, fmt.Errorf("subscribe error : %w", token.Error())
 	}
 	cli.subscriberMap.Store(topic, &ch)
+	go func() {
+		<-ctx.Done()
+		cli.mu.Lock()
+		cli.subscriberMap.Delete(topic)
+		close(ch)
+		isClosed = true
+		cli.pahoMqttCli.Unsubscribe(topic)
+		cli.mu.Unlock()
+	}()
 	return rxgo.FromChannel(ch), nil
 }
 
@@ -124,7 +139,8 @@ type Message struct {
 	Payload []byte
 }
 
-func (cli *client) SubscribeReturnMessage(topic string) (rxgo.Observable, error) {
+func (cli *client) SubscribeReturnMessage(ctx context.Context, topic string) (rxgo.Observable, error) {
+	isClosed := false
 	_, ok := cli.subscriberMap.Load(topic)
 	if ok {
 		return nil, fmt.Errorf("topic %s is already subscribed", topic)
@@ -132,51 +148,44 @@ func (cli *client) SubscribeReturnMessage(topic string) (rxgo.Observable, error)
 	ch := make(chan rxgo.Item)
 	token := cli.pahoMqttCli.Subscribe(topic, 1, func(client pahoMqtt.Client, msg pahoMqtt.Message) {
 		// fmt.Println(msg.Topic(), string(msg.Payload()))
-		ch <- rxgo.Of(Message{Topic: msg.Topic(), Payload: msg.Payload()})
+		cli.mu.Lock()
+		if !isClosed {
+			ch <- rxgo.Of(Message{Topic: msg.Topic(), Payload: msg.Payload()})
+		}
+		cli.mu.Unlock()
 	})
 	if token.Wait() && token.Error() != nil {
 		return nil, fmt.Errorf("subscribe error : %w", token.Error())
 	}
 	cli.subscriberMap.Store(topic, &ch)
+
+	go func() {
+		<-ctx.Done()
+		cli.mu.Lock()
+		cli.subscriberMap.Delete(topic)
+		close(ch)
+		isClosed = true
+		cli.pahoMqttCli.Unsubscribe(topic)
+		cli.mu.Unlock()
+	}()
 	return rxgo.FromChannel(ch), nil
 }
 
-func (cli *client) Unsubscribe(topic string) error {
-	value, ok := cli.subscriberMap.LoadAndDelete(topic)
-	if !ok {
-		return fmt.Errorf("topic %s is not found", topic)
-	}
-	token := cli.pahoMqttCli.Unsubscribe(topic)
-	if token.Wait() && token.Error() != nil {
-		return fmt.Errorf("unsubscribe error : %w", token.Error())
-	}
-	ch, _ := value.(*chan rxgo.Item)
-	close(*ch)
-	return nil
-}
-
 func (cli *client) connectionLostHandler() {
+	cli.mu.Lock()
 	cli.subscriberMap.Range(func(key, value interface{}) bool {
 		ch, ok := value.(*chan rxgo.Item)
 		if !ok {
 			return true
 		}
 		*ch <- rxgo.Error(fmt.Errorf("connection lost"))
-		close(*ch)
 		return true
 	})
+	cli.mu.Unlock()
 	cli.subscriberMap = sync.Map{}
 }
 
 func (cli *client) Close() {
 	cli.pahoMqttCli.Disconnect(250)
-	cli.subscriberMap.Range(func(key, value interface{}) bool {
-		ch, ok := value.(*chan rxgo.Item)
-		if !ok {
-			return true
-		}
-		close(*ch)
-		return true
-	})
 	cli.subscriberMap = sync.Map{}
 }

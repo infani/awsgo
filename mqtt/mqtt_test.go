@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -133,6 +134,7 @@ func Test_client_Publish(t *testing.T) {
 }
 
 func Test_client_Subscribe(t *testing.T) {
+	ctx := context.Background()
 	type args struct {
 		topic string
 	}
@@ -165,7 +167,7 @@ func Test_client_Subscribe(t *testing.T) {
 				t.Errorf("NewClient() error = %v", err)
 				return
 			}
-			obs, err := cli.Subscribe(tt.args.topic)
+			obs, err := cli.Subscribe(ctx, tt.args.topic)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("client.Subscribe() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -187,6 +189,7 @@ func Test_client_Subscribe(t *testing.T) {
 }
 
 func Test_client_SubscribeReturnMessage(t *testing.T) {
+	ctx := context.Background()
 	type args struct {
 		topic string
 	}
@@ -213,7 +216,7 @@ func Test_client_SubscribeReturnMessage(t *testing.T) {
 				t.Errorf("NewClient() error = %v", err)
 				return
 			}
-			obs, err := cli.SubscribeReturnMessage(tt.args.topic)
+			obs, err := cli.SubscribeReturnMessage(ctx, tt.args.topic)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("client.Subscribe() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -233,6 +236,7 @@ func Test_client_SubscribeReturnMessage(t *testing.T) {
 
 // use "netstat -tunp|grep 8883" and "sudo tcpkill host ip"
 func Test_Connection_Lost(t *testing.T) {
+	ctx := context.Background()
 	topic := "Device/Test_Connection_Lost/sub/peopletrack/webrtc/"
 	cli, err := NewClient(ClientOptions{
 		Server:    server,
@@ -242,7 +246,7 @@ func Test_Connection_Lost(t *testing.T) {
 		t.Errorf("NewClient() error = %v", err)
 		return
 	}
-	obs, err := cli.Subscribe(topic)
+	obs, err := cli.Subscribe(ctx, topic)
 	if err != nil {
 		t.Errorf("client.Subscribe() error = %v", err)
 		return
@@ -259,49 +263,5 @@ func Test_Connection_Lost(t *testing.T) {
 		} else {
 			t.Log(string(msg.V.([]byte)))
 		}
-	}
-}
-
-func Test_client_Unsubscribe(t *testing.T) {
-	topic := "Device/Test_client_Unsubscribe/sub/peopletrack/webrtc/"
-	cli, err := NewClient(ClientOptions{
-		Server:    server,
-		TLSConfig: GetTLSConfigFromFile(certFile, keyFile, rootCaFile),
-	})
-	if err != nil {
-		t.Errorf("NewClient() error = %v", err)
-		return
-	}
-	cli.Subscribe(topic)
-	type args struct {
-		topic string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "ok",
-			args: args{
-				topic: topic,
-			},
-			wantErr: false,
-		},
-		{
-			name: "unsubcribe again",
-			args: args{
-				topic: topic,
-			},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
-			if err := cli.Unsubscribe(tt.args.topic); (err != nil) != tt.wantErr {
-				t.Errorf("client.Unsubscribe() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
 	}
 }
