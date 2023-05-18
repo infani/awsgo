@@ -3,7 +3,7 @@
 ### What is this repository for? ###
 
 * awsgo for aws sdk golang
-* Version: 1.0.23
+* Version: 1.0.24
 * https://aws.github.io/aws-sdk-go-v2/docs/
 
 ### How do I get set up? ###
