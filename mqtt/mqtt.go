@@ -24,7 +24,7 @@ type Client interface {
 type client struct {
 	pahoMqttCli   pahoMqtt.Client
 	subscriberMap sync.Map
-	mu sync.Mutex
+	mu            sync.Mutex
 }
 
 type ClientOptions struct {
@@ -97,7 +97,7 @@ func (cli *client) IsConnected() bool {
 
 func (cli *client) Publish(topic string, payload interface{}) error {
 	token := cli.pahoMqttCli.Publish(topic, 1, false, payload)
-	if token.Wait() && token.Error() != nil {
+	if token.WaitTimeout(time.Second*5) && token.Error() != nil {
 		return fmt.Errorf("publish error : %w", token.Error())
 	}
 	return nil
@@ -118,7 +118,7 @@ func (cli *client) Subscribe(ctx context.Context, topic string) (rxgo.Observable
 		}
 		cli.mu.Unlock()
 	})
-	if token.Wait() && token.Error() != nil {
+	if token.WaitTimeout(time.Second*5) && token.Error() != nil {
 		return nil, fmt.Errorf("subscribe error : %w", token.Error())
 	}
 	cli.subscriberMap.Store(topic, &ch)
@@ -154,7 +154,7 @@ func (cli *client) SubscribeReturnMessage(ctx context.Context, topic string) (rx
 		}
 		cli.mu.Unlock()
 	})
-	if token.Wait() && token.Error() != nil {
+	if token.WaitTimeout(time.Second*5) && token.Error() != nil {
 		return nil, fmt.Errorf("subscribe error : %w", token.Error())
 	}
 	cli.subscriberMap.Store(topic, &ch)
