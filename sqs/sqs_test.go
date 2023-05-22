@@ -14,6 +14,7 @@ func TestReceiveMessage(t *testing.T) {
 	type args struct {
 		queueUrl          string
 		visibilityTimeout int32
+		waitTimeSeconds   int32
 	}
 	tests := []struct {
 		name    string
@@ -26,6 +27,7 @@ func TestReceiveMessage(t *testing.T) {
 			args: args{
 				queueUrl:          queueUrl,
 				visibilityTimeout: 1,
+				waitTimeSeconds: 1,
 			},
 			want:    nil,
 			wantErr: false,
@@ -33,7 +35,7 @@ func TestReceiveMessage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ReceiveMessage(tt.args.queueUrl, tt.args.visibilityTimeout)
+			got, err := ReceiveMessage(tt.args.queueUrl, tt.args.visibilityTimeout, tt.args.waitTimeSeconds)
 			dump.P(got)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ReceiveMessage() error = %v, wantErr %v", err, tt.wantErr)

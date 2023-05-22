@@ -23,7 +23,7 @@ func SendMessage(queueUrl string, message string) error {
 }
 
 // https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/sqs#Client.ReceiveMessage
-func ReceiveMessage(queueUrl string, visibilityTimeout int32) (*types.Message, error) {
+func ReceiveMessage(queueUrl string, visibilityTimeout int32, waitTimeSeconds int32) (*types.Message, error) {
 	cfg, err := awsConfig.LoadAWSDefaultConfig()
 	if err != nil {
 		panic("configuration error, " + err.Error())
@@ -34,6 +34,7 @@ func ReceiveMessage(queueUrl string, visibilityTimeout int32) (*types.Message, e
 		QueueUrl:            &queueUrl,
 		MaxNumberOfMessages: 1,
 		VisibilityTimeout:   visibilityTimeout,
+		WaitTimeSeconds: waitTimeSeconds,
 	})
 	if err != nil {
 		return nil, err
