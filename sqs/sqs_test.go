@@ -54,7 +54,7 @@ func TestDeleteMessage(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	msg, err := ReceiveMessage(queueUrl, 1)
+	msg, err := ReceiveMessage(queueUrl, 1, 1)
 	if err != nil {
 		t.Error(err)
 		return
