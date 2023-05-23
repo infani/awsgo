@@ -70,9 +70,6 @@ func NewClient(opts ClientOptions) (Client, error) {
 	clientOptions := pahoMqtt.NewClientOptions().AddBroker(opts.Server).SetTLSConfig(&tls.Config{
 		Certificates: []tls.Certificate{cert},
 		RootCAs:      certPool,
-	}).SetConnectionLostHandler(func(client pahoMqtt.Client, err error) {
-		cli.connectionLostHandler()
-		// log.Println(err)
 	})
 	if opts.ClientID != "" {
 		clientOptions = clientOptions.SetCleanSession(false).SetClientID(opts.ClientID)
@@ -169,20 +166,6 @@ func (cli *client) SubscribeReturnMessage(ctx context.Context, topic string) (rx
 		cli.mu.Unlock()
 	}()
 	return rxgo.FromChannel(ch), nil
-}
-
-func (cli *client) connectionLostHandler() {
-	cli.mu.Lock()
-	cli.subscriberMap.Range(func(key, value interface{}) bool {
-		ch, ok := value.(*chan rxgo.Item)
-		if !ok {
-			return true
-		}
-		*ch <- rxgo.Error(fmt.Errorf("connection lost"))
-		return true
-	})
-	cli.mu.Unlock()
-	cli.subscriberMap = sync.Map{}
 }
 
 func (cli *client) Close() {
