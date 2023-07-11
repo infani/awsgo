@@ -14,5 +14,8 @@
 * Deployment instructions
 
 ### How to init go module
-
 * go mod init github.com/infani/awsgo
+
+### How to import
+* go env -w GOPRIVATE="github.com/infani/*"
+* go get github.com/infani/awsgo
