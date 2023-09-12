@@ -26,15 +26,6 @@ func New(keyID, privateKey string) (*cloudfront, error) {
 	return &cloudfront{keyID: keyID, privateKey: key}, nil
 }
 
-func getKeyReader() *strings.Reader {
-	privateKey := ""
-	if config.PrivateKey != "" {
-		privateKey = config.PrivateKey
-	}
-
-	return strings.NewReader(privateKey)
-}
-
 func (h *cloudfront) SignUrl(url string, expire time.Time) string {
 	signer := sign.NewURLSigner(h.keyID, h.privateKey)
 	signedURL, err := signer.Sign(url, expire)
