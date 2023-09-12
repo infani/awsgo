@@ -1,14 +1,30 @@
 package cloudfront
 
 import (
+	"crypto/rsa"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign"
 	"github.com/infani/awsgo/config"
 )
+
+type cloudfront struct {
+	keyID      string
+	privateKey *rsa.PrivateKey
+}
+
+func New(keyID, privateKey string) (*cloudfront, error) {
+	keyReader := strings.NewReader(privateKey)
+	key, err := sign.LoadPEMPrivKey(keyReader)
+	if err != nil {
+		return nil, err
+	}
+	return &cloudfront{keyID: keyID, privateKey: key}, nil
+}
 
 func getKeyReader() *strings.Reader {
 	privateKey := ""
@@ -19,18 +35,8 @@ func getKeyReader() *strings.Reader {
 	return strings.NewReader(privateKey)
 }
 
-func SignUrl(url string, expire time.Time) string {
-	keyReader := getKeyReader()
-	if keyReader == nil {
-		log.Println("Failed to get key reader")
-		return ""
-	}
-	privateKey, err := sign.LoadPEMPrivKey(keyReader)
-	if err != nil {
-		log.Fatal(err)
-		return ""
-	}
-	signer := sign.NewURLSigner(config.KeyID, privateKey)
+func (h *cloudfront) SignUrl(url string, expire time.Time) string {
+	signer := sign.NewURLSigner(h.keyID, h.privateKey)
 	signedURL, err := signer.Sign(url, expire)
 	if err != nil {
 		log.Fatalf("Failed to sign url, err: %s\n", err.Error())
@@ -39,14 +45,8 @@ func SignUrl(url string, expire time.Time) string {
 	return signedURL
 }
 
-func SignCookie(url string, expire time.Time) ([]*http.Cookie, error) {
-	keyReader := getKeyReader()
-	privateKey, err := sign.LoadPEMPrivKey(keyReader)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	signer := sign.NewCookieSigner(config.KeyID, privateKey)
+func (h *cloudfront) SignCookie(url string, expire time.Time) ([]*http.Cookie, error) {
+	signer := sign.NewCookieSigner(h.keyID, h.privateKey)
 	signedCookie, err := signer.Sign(url, expire)
 	if err != nil {
 		log.Fatalf("Failed to sign cookie, err: %s\n", err.Error())
@@ -55,8 +55,8 @@ func SignCookie(url string, expire time.Time) ([]*http.Cookie, error) {
 	return signedCookie, nil
 }
 
-func GenCookie(url string, expire time.Time) (string, error) {
-	got, err := SignCookie(url, time.Now().Add(time.Hour*24))
+func (h *cloudfront) GenCookie(url string, expire time.Time) (string, error) {
+	got, err := h.SignCookie(url, time.Now().Add(time.Hour*24))
 	if err != nil {
 		return "", err
 	}
