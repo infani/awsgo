@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign"
-	"github.com/infani/awsgo/config"
 )
 
 type cloudfront struct {
