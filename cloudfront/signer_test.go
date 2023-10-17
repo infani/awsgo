@@ -109,7 +109,8 @@ func TestSignCookie(t *testing.T) {
 				t.Errorf("SignCookie() = %v, want %v", got, tt.want)
 			}
 			t.Log("Sign cookie:", rawURL.String())
-			fmt.Printf("cookies: \"%s=%s;%s=%s;%s=%s;\"\n", got[0].Name, got[0].Value, got[1].Name, got[1].Value, got[2].Name, got[2].Value)
+			// fmt.Printf("cookies: \"%s=%s;%s=%s;%s=%s;\"\n", got[0].Name, got[0].Value, got[1].Name, got[1].Value, got[2].Name, got[2].Value)
+			fmt.Printf("curl -H \"Origin: https://%s\" https://%s/playback.m3u8 --cookie \"%s=%s;%s=%s;%s=%s;\"\n", cloudfrontDomain, cloudfrontDomain, got[0].Name, got[0].Value, got[1].Name, got[1].Value, got[2].Name, got[2].Value)
 			fmt.Printf("document.cookie=\"%s=%s;domain=.vivocloud.com;samesite=none;secure\"\n", got[0].Name, got[0].Value)
 			fmt.Printf("document.cookie=\"%s=%s;domain=.vivocloud.com;samesite=none;secure\"\n", got[1].Name, got[1].Value)
 			fmt.Printf("document.cookie=\"%s=%s;domain=.vivocloud.com;samesite=none;secure\"\n", got[2].Name, got[2].Value)
