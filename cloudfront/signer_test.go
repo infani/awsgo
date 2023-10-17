@@ -8,16 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/infani/awsgo/config"
 	"github.com/infani/awsgo/s3"
 	"github.com/infani/awsgo/secretsmanager"
 )
 
-const bucketTest = "vivoreco-go-test-bucket"
+const bucket = "hulk-devices-push-storage-the-greate-one-vsaas-vortex-dev"
+const cloudfrontDomain = "cloudfront.dev.vortexcloud.com"
 
 func getCloudfront() (*cloudfront, error) {
 	keyID := "K8ASH4B6QLZS9"
-	privateKey, err := secretsmanager.GetSecretValue("vortex/cloudfront")
+	privateKey, err := secretsmanager.GetSecretValue("/vortex/infra/cloudfront/privatekey")
 	if err != nil {
 		return nil, err
 	}
@@ -31,10 +31,10 @@ func TestSignUrl(t *testing.T) {
 		return
 	}
 	const key = "playback.m3u8"
-	s3.PutFile(bucketTest, key, bytes.NewReader([]byte("#EXTM3U")))
+	s3.PutFile(bucket, key, bytes.NewReader([]byte("#EXTM3U")))
 	rawURL := url.URL{
 		Scheme: "https",
-		Host:   config.CloudfrontDomain,
+		Host:   cloudfrontDomain,
 		Path:   key,
 	}
 	type args struct {
@@ -57,9 +57,11 @@ func TestSignUrl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := c.SignUrl(tt.args.url, tt.args.expire); !strings.Contains(got, tt.want) {
+			got := c.SignUrl(tt.args.url, tt.args.expire)
+			if !strings.Contains(got, tt.want) {
 				t.Errorf("SignUrl() = %v, want %v", got, tt.want)
 			}
+			t.Log(got)
 		})
 	}
 }
@@ -73,7 +75,7 @@ func TestSignCookie(t *testing.T) {
 	}
 	rawURL := url.URL{
 		Scheme: "https",
-		Host:   config.CloudfrontDomain,
+		Host:   cloudfrontDomain,
 		Path:   "*",
 	}
 	type args struct {
