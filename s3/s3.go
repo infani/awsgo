@@ -133,3 +133,30 @@ func SignedURL(bucket string, key string, expires time.Duration) (string, error)
 	}
 	return resp.URL, nil
 }
+
+func GetSize(bucket string, folder string, filter string) (int64, error) {
+	cfg, err := awsConfig.LoadAWSDefaultConfig()
+	if err != nil {
+		return 0, err
+	}
+
+	client := awsS3.NewFromConfig(cfg)
+
+	input := &awsS3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(folder),
+	}
+
+	ctx := context.Background()
+	resp, err := client.ListObjectsV2(ctx, input)
+	if err != nil {
+		return 0, err
+	}
+	var size int64
+	for _, item := range resp.Contents {
+		if strings.Contains(*item.Key, filter) {
+			size += item.Size
+		}
+	}
+	return size, nil
+}	
