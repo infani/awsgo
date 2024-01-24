@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"regexp"
 	"strings"
 	"time"
 
@@ -134,7 +135,7 @@ func SignedURL(bucket string, key string, expires time.Duration) (string, error)
 	return resp.URL, nil
 }
 
-func GetSize(bucket string, folder string, filter string) (int64, error) {
+func GetSize(bucket string, folder string, regexFilter string) (int64, error) {
 	cfg, err := awsConfig.LoadAWSDefaultConfig()
 	if err != nil {
 		return 0, err
@@ -153,8 +154,12 @@ func GetSize(bucket string, folder string, filter string) (int64, error) {
 		return 0, err
 	}
 	var size int64
+	r, err := regexp.Compile(regexFilter)	
+	if err != nil {
+		return 0, err
+	}
 	for _, item := range resp.Contents {
-		if strings.Contains(*item.Key, filter) {
+		if r.MatchString(*item.Key) {
 			size += item.Size
 		}
 	}

@@ -86,7 +86,7 @@ func TestCopyFile(t *testing.T) {
 
 func TestGetSize(t *testing.T) {
 	folder := "thingName/archive/TestGenM3u8FromBackup/2022/01/25/09/"	
-	size, err := GetSize(bucket, folder, "ts")
+	size, err := GetSize(bucket, folder, ".[t][s]$")
 	if err != nil {
 		t.Errorf("GetSize() error = %v", err)
 	}
