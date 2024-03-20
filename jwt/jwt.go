@@ -74,3 +74,33 @@ func VerifyJWT(publicKey string, tokenString string) (err error) {
 	// Token is valid
 	return nil
 }
+
+func VerifyJWTByCert(cert string, tokenString string) (err error) {
+	keyBytes, err := os.ReadFile(cert)
+	if err != nil {
+		return err
+	}
+	// Parse the public key
+	block, _ := pem.Decode(keyBytes)
+	if block == nil || block.Type != "CERTIFICATE" {
+		return fmt.Errorf("failed to decode PEM block containing public key")
+	}
+	certData, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return err
+	}
+
+	// Parse the token
+	token, err := jwtv5.Parse(tokenString, func(token *jwtv5.Token) (interface{}, error) {
+		return certData.PublicKey, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Verify the token
+	if !token.Valid {
+		return fmt.Errorf("invalid token")
+	}
+	return nil
+}

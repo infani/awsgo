@@ -12,4 +12,8 @@ func TestCreateJWT(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	err = VerifyJWTByCert("./certs/wrong.cert.pem", token)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
 }
